@@ -1,4 +1,4 @@
-Generates stream models in time-evolving potentials with the option to include MXC dependencies.
+Generates stream models in time-evolving potentials with the option to include XMC dependencies.
 
 Stream coordinate frames are pulled from Galstreams with keys for interesting streams as follows:
 ['300S-F18',
