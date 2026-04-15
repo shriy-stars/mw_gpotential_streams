@@ -16,7 +16,7 @@ import pandas as pd
 from coordinate_utils import get_rotation_matrix, icrs_to_sf, sf_to_icrs
 
 '''
-A few functions that provide fits for simulated stream particles to data.
+Some helpful functions that provide fits for simulated stream particles to data.
 
 Currently have mcmc_sampler but a kde_fit function is in the works.
 
@@ -79,7 +79,7 @@ def log_likelihood(
 ):
     """
     Compute the log likelihood of the data given the model parameters.
-    prog_pars: list of parameters for the stream progenitor
+    prog_pars: 6D coordinates of the progenitor, with phi_1 fixed at 0 deg
     phi1_obs: observed phi1 values
     phi2_obs: observed phi2 values
     rv_obs: observed radial velocities
@@ -223,7 +223,7 @@ def log_likelihood(
     
     return np.sum(lnlk_total)
 
-def log_prior(prog_pars): #specify some reasonable bounds with a prior function; that way we don't have to brute force a bunch of stuff
+def log_prior(prog_pars, data_dict): #specify some reasonable bounds with a prior function; that way we don't have to brute force a bunch of stuff
     phi2, dist, pm_ra, pm_dec,rv = prog_pars
     if -2.5 < phi2 < 2.0 and 0.5 <dist < 40 and -3.0 < pm_ra < 3.0 and -3.50 < pm_dec < 0.0 and 250.0 < rv < 281.0:
         return 0.0
