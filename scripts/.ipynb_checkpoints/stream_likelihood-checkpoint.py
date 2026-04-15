@@ -15,7 +15,12 @@ import pandas as pd
 
 from coordinate_utils import get_rotation_matrix, icrs_to_sf, sf_to_icrs
 
+'''
+A few functions that provide fits for simulated stream particles to data.
 
+Currently have mcmc_sampler but a kde_fit function is in the works.
+
+'''
     
 def make_spline(x, y, binsize = 0.3):
     """
@@ -107,13 +112,6 @@ def log_likelihood(
         [rep.x.value, rep.y.value, rep.z.value,
          rep.v_x.value, rep.v_y.value, rep.v_z.value]
     ) # units here are kpc, km/s
-    
-    # # # stream progenitor profile parameters
-    # prog_mass, prog_scaleradius =  prog_mass, prog_scaleradius # Msun, kpc
-    # Age_stream_inGyr = Age_stream_inGyr # Gyr --<
-    
-    # # # num_particles for the spray model: 
-    # num_particles = num_particles # # preferably a multiple of 2, leading+trailing arm
     
     # simulate a stream
     stream_unperturb = create_stream_particle_spray(pot_host=pot, 

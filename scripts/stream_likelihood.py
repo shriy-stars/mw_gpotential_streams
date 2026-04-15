@@ -15,7 +15,12 @@ import pandas as pd
 
 from coordinate_utils import get_rotation_matrix, icrs_to_sf, sf_to_icrs
 
+'''
+A few functions that provide fits for simulated stream particles to data.
 
+Currently have mcmc_sampler but a kde_fit function is in the works.
+
+'''
     
 def make_spline(x, y, binsize = 0.3):
     """
