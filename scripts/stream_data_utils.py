@@ -51,13 +51,14 @@ def read_in_data(data_file, dist_col_label = None, distance_tracers = None):
 
     else:
         df = data_file
+        df_distance = distance_file
     
         select_phi1 = (df['phi1'] > -1.0) & (df['phi1'] < 5.0)
         
-        select_distance = (df[dist_col_label].notna())
-        dist_phi1 = df.loc[select_distance, 'phi1']
-        dist = df.loc[select_distance, dist_col_label]
-    
+        select_distance = (df_distance[dist_col_label].notna())
+        dist_phi1 = df_distance.loc[select_distance, 'phi1']
+        dist_kpc_data = df_distance.loc[select_distance, dist_col_label]
+        select_dist_phi1 = (df_distance['phi1'] > -1.0) & (df_distance['phi1'] < 5.0)
     
         coefficients = np.polyfit(dist_phi1, dist, deg=1)
     
@@ -65,7 +66,7 @@ def read_in_data(data_file, dist_col_label = None, distance_tracers = None):
     
         phi1med = np.median(df.loc[select_phi1,'phi1'])
         phi2med = np.median(df.loc[select_phi1,'phi2'])
-        distmed = np.median(df.loc[select_phi1 & select_distance, dist_col_label])
+        distmed = np.median(df_distance.loc[select_dist_phi1 & select_distance, dist_col_label])
         ramed = np.median(df.loc[select_phi1,'ra'])
         decmed = np.median(df.loc[select_phi1,'dec'])
         pmramed = np.median(df.loc[select_phi1, 'pmra'])
