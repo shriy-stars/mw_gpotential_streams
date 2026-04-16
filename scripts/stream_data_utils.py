@@ -1,10 +1,11 @@
-from astropy import astropy.coordinates
+import numpy as np
+
 
 '''
-This file provides some help
+This file provides a helpful function to get median values from streams as well as construct data frames easily depending on whether distances are appended to the data file or if the distances are in a separate file.
 '''
 
-def read_in_data(data_file, dist_col_label = None, distance_tracers = None):
+def read_in_data(data_file, dist_col_label = None, distance_file = None):
     '''
     Function takes in:=
     
@@ -16,11 +17,11 @@ def read_in_data(data_file, dist_col_label = None, distance_tracers = None):
 
     df: data frame of the star candidates to construct a dictionary out of in the notebook
     distance_fit: 1 degree polynomial fit for distances
-    prog_pars: an inital guess for the 6D coordinates of the stream progenitor's present-day position (in phi1, phi2 frame)
-    prog_pars_icrs: 6D present-day coordinate of the stream progenitor in the ICRS frame
+    prog_pars: median values of the stream in a 6D coordinate-array -- becomes initial guess for stream progenitor's present-day position (in phi1, phi2 frame)
+    prog_pars_icrs: 6D present-day coordinate of the stream progenitor in the ICRS frame using median values of stream
     
     '''
-    if distances_tracers is None:
+    if distance_file is None:
        
         df = data_file
     
@@ -56,13 +57,7 @@ def read_in_data(data_file, dist_col_label = None, distance_tracers = None):
         select_phi1 = (df['phi1'] > -1.0) & (df['phi1'] < 5.0)
         
         select_distance = (df_distance[dist_col_label].notna())
-        dist_phi1 = df_distance.loc[select_distance, 'phi1']
-        dist_kpc_data = df_distance.loc[select_distance, dist_col_label]
         select_dist_phi1 = (df_distance['phi1'] > -1.0) & (df_distance['phi1'] < 5.0)
-    
-        coefficients = np.polyfit(dist_phi1, dist, deg=1)
-    
-        distance_fit = np.poly1d(coefficients)
     
         phi1med = np.median(df.loc[select_phi1,'phi1'])
         phi2med = np.median(df.loc[select_phi1,'phi2'])
@@ -76,8 +71,6 @@ def read_in_data(data_file, dist_col_label = None, distance_tracers = None):
         prog_pars = [float(phi1med), float(phi2med), float(distmed), float(pmramed), float(pmdecmed), float(rvmed)]
         prog_pars_icrs = [float(ramed), float(decmed), float(distmed), float(pmramed), float(pmdecmed), float(rvmed)]
     
-        return df, distance_fit, prog_pars, prog_pars_icrs
-    
-    
-    return data_file, distance_tracers
+        return df, prog_pars, prog_pars_icrs, df_distance
+
     
