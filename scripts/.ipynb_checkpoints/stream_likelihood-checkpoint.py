@@ -82,9 +82,9 @@ def log_likelihood(
         pmdec_obs_errors,
         pot, prog_mass, 
         prog_scaleradius, 
-        Age_Stream_in_Gyr,
+        Age_stream_inGyr,
         num_particles, rotation_matrix,
-        phi1_obs_dist = 0,
+        phi1_obs_dist = None,
         phi1_range=[-20,20],
         seed_num=69420,
 ):
@@ -106,13 +106,12 @@ def log_likelihood(
 
     """
     ra_prog, dec_prog = sf_to_icrs(0, prog_pars[0], rotation_matrix)
-    #print(ra)
-    ra, dec = ra.item(), dec.item()
+    ra_prog, dec_prog = ra_prog.item(), dec_prog.item()
     
     dist, pmra, pmdec, rv = prog_pars[1:]
     
     stream_c = coord.SkyCoord(
-        ra=ra*u.degree, dec=dec*u.degree, distance=dist*u.kpc, 
+        ra=ra_prog*u.degree, dec=dec_prog*u.degree, distance=dist*u.kpc, 
         pm_ra_cosdec=pmra*u.mas/u.yr,
         pm_dec=pmdec*u.mas/u.yr,
         radial_velocity=rv*u.km/u.s
@@ -166,7 +165,11 @@ def log_likelihood(
     
     # select only points in the phi1 range
     phi1_model_sel = (phi1_model > phi1_range[0]) & (phi1_model < phi1_range[1]) 
-    phi1_obs_sel = (phi1_obs > phi1_range[0]) & (phi1_obs < phi1_range[1]) 
+    phi1_obs_sel = (phi1_obs > phi1_range[0]) & (phi1_obs < phi1_range[1])
+
+    if phi1_obs_dist is not None:
+        phi1_obs_sel_dist = (phi1_obs_dist > phi1_range[0]) & (phi1_obs_dist < phi1_range[1])
+        
     
     if phi1_model_sel.sum() == 0:
         import pdb; pdb.set_trace()
@@ -191,22 +194,27 @@ def log_likelihood(
     ## dist track
     dist_spline = make_spline(phi1_model[phi1_model_sel],dist_model[phi1_model_sel])
     if dist_spline is None:
-        print('distance spline issues')
         return -np.inf
     
-    dist_mask = (phi1_obs_sel & np.isfinite(dist_obs) & np.isfinite(dist_obs_errors))
-    
-    if dist_mask.sum() > 0:
-        dist_scale = dist_obs_errors[dist_mask]
-        dist_vals = dist_spline(phi1_obs[dist_mask])
-        lnlk_dist = stats.norm.logpdf(dist_obs[dist_mask], loc = dist_vals, scale = dist_scale)
-        #print("lnlk_dist:", lnlk_dist)
-        lnlk_dist = np.sum(lnlk_dist)
-
+    if phi1_obs_dist is not None:
+        dist_mask = (phi1_obs_sel_dist & np.isfinite(dist_obs) & np.isfinite(dist_obs_errors))
+        if dist_mask.sum() > 0:
+            dist_scale = dist_obs_errors[dist_mask]
+            dist_vals = dist_spline(phi1_obs_dist[dist_mask])
+            lnlk_dist = np.sum(stats.norm.logpdf(dist_obs[dist_mask], loc=dist_vals, scale=dist_scale))
+        else:
+            print("distance likelihood reject")
+            lnlk_dist = 0.0
     else:
-        print("distance likelihood reject")
-        lnlk_dist = 0.0
-       
+        dist_mask = (phi1_obs_sel & np.isfinite(dist_obs) & np.isfinite(dist_obs_errors))
+        if dist_mask.sum() > 0:
+            dist_scale = dist_obs_errors[dist_mask]
+            dist_vals = dist_spline(phi1_obs[dist_mask])
+            lnlk_dist = np.sum(stats.norm.logpdf(dist_obs[dist_mask], loc=dist_vals, scale=dist_scale))
+        else:
+            print("distance likelihood reject")
+            lnlk_dist = 0.0
+
     #### velocity track
     rv_spline = make_spline(phi1_model[phi1_model_sel], rv_model[phi1_model_sel])
     if rv_spline is None:
@@ -235,26 +243,43 @@ def log_likelihood(
     
     return np.sum(lnlk_total)
 
-def log_prior(prog_pars, data_dict): #specify some reasonable bounds with a prior function; that way we don't have to brute force a bunch of stuff
-    phi2, dist, pm_ra, pm_dec,rv = prog_pars
-
+def log_prior(prog_pars, 
+        phi1_obs, 
+        phi2_obs, 
+        rv_obs, 
+        rv_obs_errors, 
+        dist_obs,
+        dist_obs_errors,
+        pmra_cosdec_obs, 
+        pmra_cosdec_obs_errors, 
+        pmdec_obs, 
+        pmdec_obs_errors,
+        phi1_obs_dist = None): #specify some reasonable bounds with a prior function; that way we don't have to brute force a bunch of stuff
     
-    if -2.5 < phi2 < 2.0 and 0.5 <dist < 40 and -3.0 < pm_ra < 3.0 and -3.50 < pm_dec < 0.0 and 250.0 < rv < 281.0:
+    phi2, dist, pm_ra, pm_dec,rv = prog_pars
+    
+    if phi2_obs.min() < phi2 < phi2_obs.max() and dist_obs.min() <dist < dist_obs.max() and pmra_cosdec_obs.min() < pm_ra < pmra_cosdec_obs.max() and pmdec_obs.min() < pm_dec < pmdec_obs.max() and rv_obs.min() < rv < rv_obs.max():
         return 0.0
+    
     return -np.inf
 
 def log_probability(prog_pars, data_dict, pot, prog_mass, 
         prog_scaleradius, 
-        Age_Stream_in_Gyr,
+        Age_stream_inGyr,
         num_particles, 
         rotation_matrix):
     
-    lp = log_prior(prog_pars)
+    lp = log_prior(prog_pars, **data_dict)
     if not np.isfinite(lp):
         print("Prior rejection:", prog_pars)
         return -np.inf
 
-    ll = log_likelihood(prog_pars, **data_dict, pot=pot)
+    ll = log_likelihood(prog_pars, **data_dict, pot=pot, 
+                    prog_mass=prog_mass,
+                    prog_scaleradius=prog_scaleradius,
+                    Age_stream_inGyr=Age_stream_inGyr,
+                    num_particles=num_particles,
+                    rotation_matrix=rotation_matrix)
 
     if not np.isfinite(ll):
         print("Likelihood rejection")
