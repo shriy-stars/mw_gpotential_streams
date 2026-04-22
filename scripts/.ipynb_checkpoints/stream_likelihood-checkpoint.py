@@ -69,11 +69,22 @@ def make_spline(x, y, binsize = 0.3):
     return spline
 
 def log_likelihood(
-        prog_pars, data_dict,
+        prog_pars,
+        phi1_obs, 
+        phi2_obs, 
+        rv_obs, 
+        rv_obs_errors, 
+        dist_obs,
+        dist_obs_errors,
+        pmra_cosdec_obs, 
+        pmra_cosdec_obs_errors, 
+        pmdec_obs, 
+        pmdec_obs_errors,
         pot, prog_mass, 
         prog_scaleradius, 
         Age_Stream_in_Gyr,
-        num_particles, rotation_matrix, 
+        num_particles, rotation_matrix,
+        phi1_obs_dist = 0,
         phi1_range=[-20,20],
         seed_num=69420,
 ):
@@ -81,6 +92,7 @@ def log_likelihood(
     Compute the log likelihood of the data given the model parameters.
     prog_pars: 6D coordinates of the progenitor, with phi_1 fixed at 0 deg
     phi1_obs: observed phi1 values
+    phi1_obs_dist: observed phi1 values that correspond to distances
     phi2_obs: observed phi2 values
     rv_obs: observed radial velocities
     rv_obs_errors: errors on the radial velocities
@@ -93,7 +105,7 @@ def log_likelihood(
     seed_num: seed number for the random number generator
 
     """
-    ra, dec = sf_to_icrs(0, prog_pars[0], rotation_matrix)
+    ra_prog, dec_prog = sf_to_icrs(0, prog_pars[0], rotation_matrix)
     #print(ra)
     ra, dec = ra.item(), dec.item()
     
@@ -225,6 +237,8 @@ def log_likelihood(
 
 def log_prior(prog_pars, data_dict): #specify some reasonable bounds with a prior function; that way we don't have to brute force a bunch of stuff
     phi2, dist, pm_ra, pm_dec,rv = prog_pars
+
+    
     if -2.5 < phi2 < 2.0 and 0.5 <dist < 40 and -3.0 < pm_ra < 3.0 and -3.50 < pm_dec < 0.0 and 250.0 < rv < 281.0:
         return 0.0
     return -np.inf

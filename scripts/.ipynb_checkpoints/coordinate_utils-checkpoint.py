@@ -57,5 +57,5 @@ def sf_to_icrs(phi1, phi2, rot_matrix):
     ra_deg = np.degrees(ra_rad)
     dec_deg = np.degrees(dec_rad)
 
-    return ra_deg, dec_deg
+    return ra_deg.squeeze(), dec_deg.squeeze()
 
