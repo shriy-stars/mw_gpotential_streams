@@ -197,11 +197,11 @@ def log_likelihood(
         print("phi2 spline failed")
         return -np.inf
         
-    phi2_std = np.nanstd(phi2_model[phi1_model_sel] - phi2_spline(phi1_model[phi1_model_sel]))
+    #phi2_std = np.nanstd(phi2_model[phi1_model_sel] - phi2_spline(phi1_model[phi1_model_sel]))
     
     phi2_vals = phi2_spline(phi1_obs[phi1_obs_sel])
     lnlk_spatial = stats.norm.logpdf(phi2_obs[phi1_obs_sel], loc=phi2_vals,
-                                  scale=np.sqrt(phi2_std**2 + sigma_phi2**2))
+                                  scale=np.sqrt(sigma_phi2**2))
     #print("lnlk_spatial:", lnlk_spatial)
     
     ## dist track
