@@ -167,8 +167,8 @@ def log_likelihood(
     phi1_model, phi2_model = icrs_to_sf(ra_model, dec_model, rotation_matrix)
 
     #print("rv_model range:", rv_model.min(), rv_model.max())
-    #print("rv_obs range:", data_dict_aau['rv_obs'].min(), data_dict_aau['rv_obs'].max())
-    #print("dist_obs:", data_dict_aau['dist_obs'])
+    # print("rv_obs range:", data_dict_aau['rv_obs'].min(), data_dict_aau['rv_obs'].max())
+    # print("dist_obs:", data_dict_aau['dist_obs'])
     #print("dist_model range:", dist_model.min(), dist_model.max())
     
     # select only points in the phi1 range
@@ -202,7 +202,7 @@ def log_likelihood(
     phi2_vals = phi2_spline(phi1_obs[phi1_obs_sel])
     lnlk_spatial = stats.norm.logpdf(phi2_obs[phi1_obs_sel], loc=phi2_vals,
                                   scale=np.sqrt(sigma_phi2**2))
-    #print("lnlk_spatial:", lnlk_spatial)
+    # print("lnlk_spatial:", lnlk_spatial)
     
     ## dist track
     dist_spline = make_spline(phi1_model[phi1_model_sel],dist_model[phi1_model_sel])
@@ -253,7 +253,7 @@ def log_likelihood(
     lnlk_pmra_cosdec = stats.norm.logpdf(pmra_cosdec_obs[phi1_obs_sel], loc=pmra_cosdec_vals,
                                       scale=np.sqrt(pmra_cosdec_obs_errors[phi1_obs_sel]**2 + sigma_pm**2))
 
-    #print("lnlk_pmra_cosdec:", lnlk_pmra_cosdec)
+    # print("lnlk_pmra_cosdec:", lnlk_pmra_cosdec)
     
     ### pmdec track
     pmdec_spline = make_spline(phi1_model[phi1_model_sel], pmdec_model[phi1_model_sel])
@@ -264,7 +264,7 @@ def log_likelihood(
     
     lnlk_pmdec = stats.norm.logpdf(pmdec_obs[phi1_obs_sel], loc=pmdec_vals,
                                 scale=np.sqrt(pmdec_obs_errors[phi1_obs_sel]**2 + sigma_pm**2))
-    #print("lnlk_pmdec:", lnlk_pmdec)
+    # print("lnlk_pmdec:", lnlk_pmdec)
     
     lnlk_total = lnlk_spatial + lnlk_velocity + lnlk_pmra_cosdec + lnlk_pmdec + lnlk_dist
     return np.sum(lnlk_total)
@@ -309,7 +309,7 @@ def log_probability(prog_pars, data_dict, pot, prog_mass,
     lp = log_prior(prog_pars, **data_dict)
     
     if not np.isfinite(lp):
-        #print("Prior rejection:", prog_pars)
+        print("Prior rejection:", prog_pars)
         return -np.inf
 
     ll = log_likelihood(prog_pars, **data_dict, pot=pot, 
@@ -320,6 +320,6 @@ def log_probability(prog_pars, data_dict, pot, prog_mass,
                     rotation_matrix=rotation_matrix)
 
     if not np.isfinite(ll):
-        #print("Likelihood rejection")
+        print("Likelihood rejection")
         return -np.inf
     return lp + ll
